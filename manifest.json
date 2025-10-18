@@ -1,0 +1,21 @@
+{
+    "name": "App de Medicamentos",
+    "short_name": "Medicamentos",
+    "description": "Um app para ajudar a gerenciar seus medicamentos.",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0056b3",
+    "icons": [
+        {
+            "src": "https://placehold.co/192x192/0056b3/ffffff?text=M",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://placehold.co/512x512/0056b3/ffffff?text=M",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

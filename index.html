@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App de Medicamentos</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyCA9mqz4sovd8cZQLGpShjv7gVaD7EnBdE",
+          authDomain: "app-medicamentos-c400f.firebaseapp.com",
+          projectId: "app-medicamentos-c400f",
+          storageBucket: "app-medicamentos-c400f.appspot.com",
+          messagingSenderId: "533646794567",
+          appId: "1:533646794567:web:4ef33c1a0986a7aca73662"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(); 
+    </script>
+</head>
+<body>
+
+    <div id="container-alertas"></div>
+    
+    <header class="navbar">
+        <h1 class="navbar-title">Meus Medicamentos</h1>
+        <nav>
+            <button class="nav-button" data-page="listar">
+                <i class="fas fa-list-ul"></i>
+                <span>Listar</span>
+            </button>
+            <button class="nav-button" data-page="sobre">
+                <i class="fas fa-info-circle"></i>
+                <span>Sobre</span>
+            </button>
+        </nav>
+    </header>
+
+    <main id="app-container">
+        <section id="page-listar" class="page active">
+            <h2>Meus Medicamentos</h2>
+            <div id="lista-medicamentos-container"></div>
+        </section>
+
+        <section id="page-cadastrar" class="page">
+            <h2 id="form-titulo">Registar Medicamento</h2>
+            <form id="form-medicamento">
+                <input type="hidden" id="medicamento-id">
+                <div class="form-group">
+                    <label for="nome">Nome do Medicamento:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="dose">Dose (ex: 500mg, 1 comprimido):</label>
+                    <input type="text" id="dose" name="dose" required>
+                </div>
+                <div class="form-group">
+                    <label for="horario">Horários (separados por vírgula):</label>
+                    <input type="text" id="horario" name="horario" placeholder="08:00, 14:00, 20:00" required>
+                </div>
+                <div class="form-group">
+                    <label for="duracao">Duração do tratamento (dias):</label>
+                    <input type="number" id="duracao" name="duracao" min="1" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-salvar"><i class="fas fa-save"></i> Salvar</button>
+                    <button type="button" class="btn-cancelar" data-page="listar">Cancelar</button>
+                </div>
+            </form>
+        </section>
+        
+        <section id="page-sobre" class="page">
+            <h2>Sobre o Projeto</h2>
+            <p>Este é o Projeto App de Medicamentos.</p>
+            <p>Desenvolvido para auxiliar no controlo e agendamento de remédios, com foco em PWA e acessibilidade.</p>
+        </section>
+    </main>
+    
+    <div id="fab-container" class="fab-container hidden">
+        <button id="btn-ir-para-cadastro" class="fab" data-page="cadastrar">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
