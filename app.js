@@ -20,7 +20,7 @@ if (typeof firebaseConfig !== 'undefined') {
 if ('serviceWorker' in navigator && typeof firebaseConfig !== 'undefined') { // Só regista se o firebase estiver ok
     window.addEventListener('load', () => {
         // Usa um caminho relativo para funcionar no GitHub Pages
-        navigator.serviceWorker.register('./service-worker.js')
+        navigator.service-worker.register('./service-worker.js')
             .then(registration => {
                 console.log('Service Worker registrado com sucesso:', registration);
             })
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(async (user) => {
         currentUser = user; // Atualiza o utilizador atual
         if (user) {
-            await user.reload();
+            await user.reload(); // Garante que o estado de verificação do e-mail está atualizado
             if (user.emailVerified) {
                 showPage(appContent);
                 mudarPaginaApp('listar');
@@ -108,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             showPage(pageAuth);
-            if (unsubscribe) unsubscribe();
-            listaMedicamentosContainer.innerHTML = '';
+            if (unsubscribe) unsubscribe(); // Para de 'escutar' os dados do utilizador anterior
+            listaMedicamentosContainer.innerHTML = ''; // Limpa a lista
         }
         hideLoading();
     });
@@ -138,7 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
             await userCredential.user.sendEmailVerification();
+            // Desloga o utilizador para forçá-lo a verificar o e-mail antes de entrar
             await auth.signOut();
+            // Mostra a página de verificação
             showPage(pageVerificacao);
         } catch (error) {
             if (error.code === 'auth/email-already-in-use') {
@@ -160,9 +162,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const senha = document.getElementById('login-senha').value;
         try {
             await auth.signInWithEmailAndPassword(email, senha);
+            // O onAuthStateChanged tratará de redirecionar o utilizador
         } catch (error) {
             authError.textContent = 'E-mail ou senha inválidos.';
-            hideLoading();
+            hideLoading(); // Esconde o loading apenas se houver erro
         }
     });
 
@@ -191,16 +194,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA PRINCIPAL DO APP (CRUD) ---
 
+    // Navegação interna do app
     navButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const pageId = button.getAttribute('data-page');
-            if (pageId) mudarPaginaApp(pageId);
-        });
+        const pageId = button.getAttribute('data-page');
+        if (pageId) {
+            button.addEventListener('click', () => mudarPaginaApp(pageId));
+        }
+    });
+    // Adiciona evento ao botão FAB
+    document.getElementById('btn-ir-para-cadastro').addEventListener('click', () => {
+        mudarPaginaApp('cadastrar');
     });
 
+
     function carregarMedicamentos(uid) {
-        if (unsubscribe) unsubscribe();
+        if (unsubscribe) unsubscribe(); // Cancela a 'escuta' anterior
+        
         const consulta = db.collection('medicamentos').where('uid', '==', uid);
+        
         unsubscribe = consulta.onSnapshot(snapshot => {
             if (snapshot.empty) {
                 listaMedicamentosContainer.innerHTML = '<p class="medicamento-item-placeholder">Nenhum medicamento cadastrado.</p>';
@@ -210,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarMedicamentos(medicamentos);
         }, error => {
             console.error("Erro ao carregar medicamentos:", error);
+            listaMedicamentosContainer.innerHTML = '<p class="medicamento-item-placeholder erro">Não foi possível carregar os medicamentos.</p>';
         });
     }
 
@@ -217,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         listaMedicamentosContainer.innerHTML = '';
         const agora = new Date();
         
+        // Ordena por data de criação, do mais recente para o mais antigo
         medicamentos.sort((a, b) => b.criadoEm.toDate() - a.criadoEm.toDate());
 
         medicamentos.forEach(med => {
@@ -243,11 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Submissão do formulário de medicamentos
     formMedicamento.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('medicamento-id').value;
         const uid = auth.currentUser.uid;
         if (!uid) return;
+
         const dados = {
             uid: uid,
             nome: document.getElementById('nome').value,
@@ -256,18 +271,21 @@ document.addEventListener('DOMContentLoaded', () => {
             duracao: parseInt(document.getElementById('duracao').value),
             criadoEm: new Date(),
         };
+
         try {
-            if (id) {
+            if (id) { // Atualiza
                 await db.collection('medicamentos').doc(id).update(dados);
-            } else {
+            } else { // Cria
                 await db.collection('medicamentos').add(dados);
             }
             mudarPaginaApp('listar');
         } catch (error) {
             console.error("Erro ao salvar medicamento:", error);
+            alert("Não foi possível salvar o medicamento.");
         }
     });
 
+    // Ações de editar e excluir na lista
     listaMedicamentosContainer.addEventListener('click', async (e) => {
         const btnEditar = e.target.closest('.btn-editar');
         const btnExcluir = e.target.closest('.btn-excluir');
@@ -276,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = btnEditar.dataset.id;
             const doc = await db.collection('medicamentos').doc(id).get();
             const data = doc.data();
+            
             document.getElementById('medicamento-id').value = id;
             document.getElementById('nome').value = data.nome;
             document.getElementById('dose').value = data.dose;
@@ -288,16 +307,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnExcluir) {
             const id = btnExcluir.dataset.id;
             if (confirm('Tem certeza que deseja excluir este medicamento?')) {
-                await db.collection('medicamentos').doc(id).delete();
+                try {
+                    await db.collection('medicamentos').doc(id).delete();
+                } catch (error) {
+                    console.error("Erro ao excluir medicamento:", error);
+                    alert("Não foi possível excluir o medicamento.");
+                }
             }
         }
     });
 
     // --- LÓGICA DE ALERTAS ---
-    let todosMedicamentos = [];
     const containerAlertas = document.getElementById('container-alertas');
     let alertInterval = null;
 
+    // Controla o início/fim da verificação de alertas com base no login
     auth.onAuthStateChanged(user => {
         if(user && user.emailVerified){
             if(!alertInterval) {
@@ -314,6 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function iniciarVerificacaoAlertas() {
         const agora = new Date();
         const segundosParaProximoMinuto = 60 - agora.getSeconds();
+        
         setTimeout(() => {
             verificarAlertas();
             alertInterval = setInterval(verificarAlertas, 60000); // 60 segundos
@@ -322,19 +347,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function verificarAlertas() {
         if (!auth.currentUser) return;
+        
         db.collection('medicamentos').where('uid', '==', auth.currentUser.uid).get().then(snapshot => {
-            todosMedicamentos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const medicamentosAtivos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
             const agora = new Date();
-            const horaAtual = agora.toTimeString().substring(0, 5);
-            agora.setMinutes(agora.getMinutes() + 5);
-            const horaPreAlerta = agora.toTimeString().substring(0, 5);
+            const horaAtual = agora.toTimeString().substring(0, 5); // ex: "14:30"
+            
+            const agoraMais5 = new Date();
+            agoraMais5.setMinutes(agora.getMinutes() + 5);
+            const horaPreAlerta = agoraMais5.toTimeString().substring(0, 5);
 
-            todosMedicamentos.forEach(med => {
+            medicamentosAtivos.forEach(med => {
                 const dataCriacao = med.criadoEm.toDate();
                 const dataFinal = new Date(dataCriacao);
                 dataFinal.setDate(dataCriacao.getDate() + med.duracao);
-                if (new Date() < dataFinal) { // Apenas se o tratamento estiver ativo
+
+                // Só verifica se o tratamento estiver ativo
+                if (new Date() < dataFinal) {
                     const horarios = med.horario.split(',').map(h => h.trim());
+                    
                     if (horarios.includes(horaAtual)) {
                         mostrarAlerta(med, 'agora');
                     }
@@ -348,10 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function mostrarAlerta(medicamento, tipo) {
         const alertaId = `alerta-${medicamento.id}-${tipo}`;
-        if (document.getElementById(alertaId)) return;
+        if (document.getElementById(alertaId)) return; // Impede alertas duplicados
+
         const alerta = document.createElement('div');
         alerta.id = alertaId;
         alerta.className = `alerta alerta-${tipo}`;
+        
         alerta.innerHTML = `
             <div class="alerta-header">
                 <strong>${tipo === 'agora' ? 'Hora de tomar!' : 'Lembrete'}</strong>
@@ -362,8 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Dose:</strong> ${medicamento.dose}</p>
             </div>
         `;
+        
         containerAlertas.appendChild(alerta);
+        
         alerta.querySelector('.btn-fechar-alerta').addEventListener('click', () => alerta.remove());
+        
+        // Remove o alerta automaticamente após 20 segundos
         setTimeout(() => alerta.remove(), 20000);
     }
 });

@@ -1,7 +1,7 @@
-Ignorar ficheiros de configuração com chaves secretas
+Este ficheiro está vazio de propósito.
 
-firebase-config.js
+Para esta aplicação, o firebase-config.js precisa de ser enviado
 
-Ignorar dependências do Node (se aplicável no futuro)
+para o GitHub para que o site online funcione.
 
-node_modules/
+A segurança é garantida pelas Regras de Segurança do Firebase.
