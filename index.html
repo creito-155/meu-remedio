@@ -57,6 +57,19 @@
     </section>
 
     <!-- ============================================= -->
+    <!-- PÁGINA DE VERIFICAÇÃO DE E-MAIL                 -->
+    <!-- ============================================= -->
+    <section id="page-verificacao" class="page hidden">
+        <div class="auth-container">
+            <h2>Verifique o seu E-mail</h2>
+            <p>Enviámos um link de verificação para o seu e-mail. Por favor, clique no link para ativar a sua conta.</p>
+            <p>Depois de verificar, pode fazer login.</p>
+            <button id="btn-reenviar-verificacao" class="btn-principal">Reenviar E-mail</button>
+            <button id="btn-voltar-login" class="btn-secundario">Voltar para Login</button>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
     <!-- CONTEÚDO PRINCIPAL DO APP                     -->
     <!-- ============================================= -->
     <div id="app-content" class="hidden">
@@ -132,18 +145,16 @@
     <!-- Scripts Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    
     <!-- CARREGA A CONFIGURAÇÃO SECRETA (NÃO VAI PARA O GITHUB) -->
-    <script src="firebase-config.js"></script>
+    <script src="firebase-config.js" defer></script>
 
-    <script>
+    <script defer>
         // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
     </script>
     
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
 </body>
 </html>
