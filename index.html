@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu App de Medicamentos</title>
+    <title>App de Medicamentos</title>
+    
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Normalize.css para consistência entre navegadores -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ============================================= -->
-    <!-- INDICADOR DE CARREGAMENTO                     -->
-    <!-- ============================================= -->
+    <!-- Indicador de Carregamento (Spinner) -->
     <div id="loading-spinner" class="loading-overlay">
         <div class="spinner"></div>
     </div>
 
-    <!-- ============================================= -->
-    <!-- PÁGINA DE AUTENTICAÇÃO                          -->
-    <!-- ============================================= -->
-    <section id="page-auth" class="page hidden">
+    <!-- Página de Autenticação -->
+    <section id="page-auth" class="page-fullscreen">
         <div class="auth-container">
             <!-- Formulário de Login -->
             <form id="form-login" class="auth-form">
-                <h2>Entrar</h2>
+                <h2>Login</h2>
                 <div class="form-group">
-                    <label for="login-email">Email:</label>
+                    <label for="login-email">E-mail:</label>
                     <input type="email" id="login-email" required>
                 </div>
                 <div class="form-group">
@@ -35,43 +35,37 @@
                     <input type="password" id="login-senha" required>
                 </div>
                 <button type="submit" class="btn-principal">Entrar</button>
+                <p id="auth-error" class="auth-error"></p>
                 <p class="auth-toggle">Não tem uma conta? <a href="#" id="link-para-registo">Registe-se</a></p>
             </form>
-
             <!-- Formulário de Registo -->
             <form id="form-registo" class="auth-form hidden">
                 <h2>Criar Conta</h2>
                 <div class="form-group">
-                    <label for="registo-email">Email:</label>
+                    <label for="registo-email">E-mail:</label>
                     <input type="email" id="registo-email" required>
                 </div>
                 <div class="form-group">
-                    <label for="registo-senha">Senha (mín. 6 caracteres):</label>
+                    <label for="registo-senha">Senha:</label>
                     <input type="password" id="registo-senha" required>
                 </div>
                 <button type="submit" class="btn-principal">Criar Conta</button>
-                <p class="auth-toggle">Já tem uma conta? <a href="#" id="link-para-login">Entrar</a></p>
+                <p class="auth-toggle">Já tem uma conta? <a href="#" id="link-para-login">Faça login</a></p>
             </form>
-            <p id="auth-error" class="auth-error"></p>
         </div>
     </section>
 
-    <!-- ============================================= -->
-    <!-- PÁGINA DE VERIFICAÇÃO DE E-MAIL                 -->
-    <!-- ============================================= -->
-    <section id="page-verificacao" class="page hidden">
+    <!-- Página de Verificação de E-mail -->
+    <section id="page-verificacao" class="page-fullscreen hidden">
         <div class="auth-container">
             <h2>Verifique o seu E-mail</h2>
             <p>Enviámos um link de verificação para o seu e-mail. Por favor, clique no link para ativar a sua conta.</p>
-            <p>Depois de verificar, pode fazer login.</p>
             <button id="btn-reenviar-verificacao" class="btn-principal">Reenviar E-mail</button>
-            <button id="btn-voltar-login" class="btn-secundario">Voltar para Login</button>
+            <button id="btn-voltar-login" class="btn-secundario">Voltar para o Login</button>
         </div>
     </section>
 
-    <!-- ============================================= -->
-    <!-- CONTEÚDO PRINCIPAL DO APP                     -->
-    <!-- ============================================= -->
+    <!-- Conteúdo Principal do App -->
     <div id="app-content" class="hidden">
         <header class="navbar">
             <h1 class="navbar-title">Meus Medicamentos</h1>
@@ -84,52 +78,49 @@
                     <i class="fas fa-info-circle"></i>
                     <span>Sobre</span>
                 </button>
-                <button id="btn-sair" class="nav-button">
+                <button class="nav-button" id="btn-sair">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </button>
             </nav>
         </header>
-
+        
         <main id="app-container">
-            <section id="page-listar" class="page">
+            <section id="page-listar" class="page active">
                 <h2>Meus Medicamentos</h2>
                 <div id="lista-medicamentos-container"></div>
             </section>
+            
             <section id="page-cadastrar" class="page">
                 <h2 id="form-titulo">Cadastrar Medicamento</h2>
                 <form id="form-medicamento">
                     <input type="hidden" id="medicamento-id">
                     <div class="form-group">
                         <label for="nome">Nome do Medicamento:</label>
-                        <input type="text" id="nome" name="nome" required>
+                        <input type="text" id="nome" required>
                     </div>
                     <div class="form-group">
-                        <label for="dose">Dose (ex: 500mg, 1 comprimido):</label>
-                        <input type="text" id="dose" name="dose" required>
+                        <label for="dose">Dose (ex: 500mg):</label>
+                        <input type="text" id="dose" required>
                     </div>
                     <div class="form-group">
                         <label for="horario">Horários (separados por vírgula):</label>
-                        <input type="text" id="horario" name="horario" placeholder="08:00, 14:00, 20:00" required>
+                        <input type="text" id="horario" placeholder="08:00, 14:00, 20:00" required>
                     </div>
                     <div class="form-group">
-                        <label for="duracao">Duração do tratamento (dias):</label>
-                        <input type="number" id="duracao" name="duracao" min="1" required>
+                        <label for="duracao">Duração (dias):</label>
+                        <input type="number" id="duracao" min="1" required>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn-salvar">
-                            <i class="fas fa-save"></i> Salvar
-                        </button>
-                        <button type="button" class="btn-cancelar" data-page="listar">
-                            Cancelar
-                        </button>
+                        <button type="submit" class="btn-salvar">Salvar</button>
+                        <button type="button" class="btn-cancelar" data-page="listar">Cancelar</button>
                     </div>
                 </form>
             </section>
+            
             <section id="page-sobre" class="page">
-                <h2>Sobre o Projeto</h2>
-                <p>Este é o Projeto App de Medicamentos.</p>
-                <p>Desenvolvido para auxiliar no controlo e agendamento de remédios, com foco em PWA e acessibilidade.</p>
+                <h2>Sobre</h2>
+                <p>App de gestão de medicamentos.</p>
             </section>
         </main>
 
@@ -138,23 +129,19 @@
                 <i class="fas fa-plus"></i>
             </button>
         </div>
-
+        
         <div id="container-alertas"></div>
     </div>
 
-    <!-- Scripts Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <!-- CARREGA A CONFIGURAÇÃO SECRETA (NÃO VAI PARA O GITHUB) -->
-    <script src="firebase-config.js" defer></script>
-
-    <script defer>
-        // Inicializa o Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-    </script>
+    <!-- Scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
+    <!-- CARREGA A CONFIGURAÇÃO -->
+    <script src="firebase-config.js" defer></script>
+    
+    <!-- SCRIPT PRINCIPAL DA APLICAÇÃO -->
     <script src="app.js" defer></script>
 </body>
 </html>

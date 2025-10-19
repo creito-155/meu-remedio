@@ -1,7 +1,26 @@
+// --- INICIALIZAÇÃO DO FIREBASE ---
+// Estas variáveis serão acessíveis em todo o ficheiro
+let auth, db;
+
+// A verificação espera que o firebaseConfig do ficheiro firebase-config.js esteja disponível
+if (typeof firebaseConfig !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+} else {
+    // Mostra uma mensagem de erro crítica se a configuração falhar
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.innerHTML = '<h1 style="text-align: center; margin-top: 50px; color: red;">Erro Crítico: Ficheiro de configuração do Firebase (firebase-config.js) não encontrado.</h1>';
+    });
+    console.error("Configuração do Firebase não encontrada.");
+}
+
+
 // --- REGISTO DO SERVICE WORKER (PARA PWA) ---
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && typeof firebaseConfig !== 'undefined') { // Só regista se o firebase estiver ok
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
+        // Usa um caminho relativo para funcionar no GitHub Pages
+        navigator.serviceWorker.register('./service-worker.js')
             .then(registration => {
                 console.log('Service Worker registrado com sucesso:', registration);
             })
@@ -12,6 +31,12 @@ if ('serviceWorker' in navigator) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // A verificação para auth e db é importante para não executar código se a inicialização falhou
+    if (!auth || !db) {
+        console.error("Firebase não inicializado. A aplicação não pode continuar.");
+        return; // Interrompe a execução se o Firebase não estiver pronto
+    }
+    
     // --- SELETORES DE ELEMENTOS ---
     const loadingSpinner = document.getElementById('loading-spinner');
     const pageAuth = document.getElementById('page-auth');
@@ -73,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(async (user) => {
         currentUser = user; // Atualiza o utilizador atual
         if (user) {
-            // O utilizador recarregou a página e precisa de verificar o email novamente
             await user.reload();
             if (user.emailVerified) {
                 showPage(appContent);
@@ -114,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
             await userCredential.user.sendEmailVerification();
-            await auth.signOut(); // Desloga o utilizador para forçá-lo a verificar
+            await auth.signOut();
             showPage(pageVerificacao);
         } catch (error) {
             if (error.code === 'auth/email-already-in-use') {
@@ -135,8 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('login-email').value;
         const senha = document.getElementById('login-senha').value;
         try {
-            const userCredential = await auth.signInWithEmailAndPassword(email, senha);
-            // O onAuthStateChanged tratará de mostrar a página correta
+            await auth.signInWithEmailAndPassword(email, senha);
         } catch (error) {
             authError.textContent = 'E-mail ou senha inválidos.';
             hideLoading();
@@ -159,7 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     btnVoltarLogin.addEventListener('click', () => {
         auth.signOut();
-        showPage(pageAuth);
     });
 
     // Sair (Logout)
@@ -274,18 +296,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE ALERTAS ---
     let todosMedicamentos = [];
     const containerAlertas = document.getElementById('container-alertas');
+    let alertInterval = null;
+
+    auth.onAuthStateChanged(user => {
+        if(user && user.emailVerified){
+            if(!alertInterval) {
+                iniciarVerificacaoAlertas();
+            }
+        } else {
+            if(alertInterval){
+                clearInterval(alertInterval);
+                alertInterval = null;
+            }
+        }
+    });
 
     function iniciarVerificacaoAlertas() {
         const agora = new Date();
         const segundosParaProximoMinuto = 60 - agora.getSeconds();
         setTimeout(() => {
             verificarAlertas();
-            setInterval(verificarAlertas, 60000); // 60 segundos
+            alertInterval = setInterval(verificarAlertas, 60000); // 60 segundos
         }, segundosParaProximoMinuto * 1000);
-    }
-
-    if (auth.currentUser && auth.currentUser.emailVerified) {
-        iniciarVerificacaoAlertas();
     }
 
     function verificarAlertas() {
