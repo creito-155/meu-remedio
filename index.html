@@ -134,15 +134,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     
+    <!-- CARREGA A CONFIGURAÇÃO SECRETA (NÃO VAI PARA O GITHUB) -->
+    <script src="firebase-config.js"></script>
+
     <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyCA9mqz4sovd8cZQLGpShjv7gVaD7EnBdE",
-          authDomain: "app-medicamentos-c400f.firebaseapp.com",
-          projectId: "app-medicamentos-c400f",
-          storageBucket: "app-medicamentos-c400f.firebasestorage.app",
-          messagingSenderId: "533646794567",
-          appId: "1:533646794567:web:4ef33c1a0986a7aca73662"
-        };
+        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();

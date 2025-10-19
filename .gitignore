@@ -1,0 +1,7 @@
+Ignorar ficheiros de configuração com chaves secretas
+
+firebase-config.js
+
+Ignorar dependências do Node (se aplicável no futuro)
+
+node_modules/
