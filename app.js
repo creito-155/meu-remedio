@@ -20,7 +20,7 @@ if (typeof firebaseConfig !== 'undefined') {
 if ('serviceWorker' in navigator && typeof firebaseConfig !== 'undefined') { // Só regista se o firebase estiver ok
     window.addEventListener('load', () => {
         // Usa um caminho relativo para funcionar no GitHub Pages
-        navigator.service-worker.register('./service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
             .then(registration => {
                 console.log('Service Worker registrado com sucesso:', registration);
             })
@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let unsubscribe = null; // Para 'escutar' as alterações do Firestore
     let currentUser = null; // Para guardar o utilizador atual
+    let alertInterval = null;
 
     // --- FUNÇÕES DE CONTROLO DE UI ---
     const showLoading = () => loadingSpinner.classList.remove('hidden');
@@ -103,12 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 showPage(appContent);
                 mudarPaginaApp('listar');
                 carregarMedicamentos(user.uid);
+                iniciarVerificacaoAlertas();
             } else {
                 showPage(pageVerificacao);
             }
         } else {
             showPage(pageAuth);
             if (unsubscribe) unsubscribe(); // Para de 'escutar' os dados do utilizador anterior
+             if(alertInterval){
+                clearInterval(alertInterval);
+                alertInterval = null;
+            }
             listaMedicamentosContainer.innerHTML = ''; // Limpa a lista
         }
         hideLoading();
@@ -259,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Submissão do formulário de medicamentos
     formMedicamento.addEventListener('submit', async (e) => {
         e.preventDefault();
+        showLoading();
         const id = document.getElementById('medicamento-id').value;
         const uid = auth.currentUser.uid;
         if (!uid) return;
@@ -269,19 +276,21 @@ document.addEventListener('DOMContentLoaded', () => {
             dose: document.getElementById('dose').value,
             horario: document.getElementById('horario').value,
             duracao: parseInt(document.getElementById('duracao').value),
-            criadoEm: new Date(),
         };
 
         try {
             if (id) { // Atualiza
-                await db.collection('medicamentos').doc(id).update(dados);
+                 await db.collection('medicamentos').doc(id).update(dados);
             } else { // Cria
+                dados.criadoEm = new Date();
                 await db.collection('medicamentos').add(dados);
             }
             mudarPaginaApp('listar');
         } catch (error) {
             console.error("Erro ao salvar medicamento:", error);
             alert("Não foi possível salvar o medicamento.");
+        } finally {
+            hideLoading();
         }
     });
 
@@ -319,23 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE ALERTAS ---
     const containerAlertas = document.getElementById('container-alertas');
-    let alertInterval = null;
-
-    // Controla o início/fim da verificação de alertas com base no login
-    auth.onAuthStateChanged(user => {
-        if(user && user.emailVerified){
-            if(!alertInterval) {
-                iniciarVerificacaoAlertas();
-            }
-        } else {
-            if(alertInterval){
-                clearInterval(alertInterval);
-                alertInterval = null;
-            }
-        }
-    });
-
+    
     function iniciarVerificacaoAlertas() {
+        if(alertInterval) return;
         const agora = new Date();
         const segundosParaProximoMinuto = 60 - agora.getSeconds();
         
@@ -346,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function verificarAlertas() {
-        if (!auth.currentUser) return;
+        if (!auth.currentUser || !auth.currentUser.emailVerified) return;
         
         db.collection('medicamentos').where('uid', '==', auth.currentUser.uid).get().then(snapshot => {
             const medicamentosAtivos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
