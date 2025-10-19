@@ -7,25 +7,25 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Variável global para guardar o ID do utilizador e a subscrição do Firestore
+// Variáveis globais e de elementos
 let currentUserId = null;
 let unsubscribeFirestore = null;
+const loadingSpinner = document.getElementById('loading-spinner');
+const authPage = document.getElementById('page-auth');
+const appContent = document.getElementById('app-content');
 
 // --- CONTROLO PRINCIPAL DA APLICAÇÃO (BASEADO NA AUTENTICAÇÃO) ---
 auth.onAuthStateChanged(user => {
-    const authPage = document.getElementById('page-auth');
-    const appContent = document.getElementById('app-content');
+    loadingSpinner.classList.add('hidden'); // Esconde o spinner assim que o estado é conhecido
 
     if (user) {
         // --- UTILIZADOR AUTENTICADO ---
         console.log("Utilizador autenticado:", user.uid);
         currentUserId = user.uid;
         
-        // Esconde a página de login e mostra o conteúdo do app
         authPage.classList.add('hidden');
         appContent.classList.remove('hidden');
         
-        // Inicia todas as funcionalidades do app
         initializeAppLogic();
 
     } else {
@@ -33,11 +33,9 @@ auth.onAuthStateChanged(user => {
         console.log("Nenhum utilizador autenticado.");
         currentUserId = null;
 
-        // Mostra a página de login e esconde o conteúdo do app
         authPage.classList.remove('hidden');
         appContent.classList.add('hidden');
         
-        // Cancela a 'escuta' de dados do utilizador anterior
         if (unsubscribeFirestore) {
             unsubscribeFirestore();
             console.log("Subscrição do Firestore cancelada.");
@@ -53,7 +51,6 @@ const linkParaRegisto = document.getElementById('link-para-registo');
 const linkParaLogin = document.getElementById('link-para-login');
 const authError = document.getElementById('auth-error');
 
-// Alternar entre formulários
 linkParaRegisto.addEventListener('click', (e) => {
     e.preventDefault();
     formLogin.classList.add('hidden');
@@ -68,9 +65,9 @@ linkParaLogin.addEventListener('click', (e) => {
     authError.textContent = '';
 });
 
-// Processar login
 formLogin.addEventListener('submit', (e) => {
     e.preventDefault();
+    loadingSpinner.classList.remove('hidden'); // Mostra o spinner
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
     
@@ -78,12 +75,13 @@ formLogin.addEventListener('submit', (e) => {
         .catch(error => {
             console.error("Erro de login:", error.code);
             authError.textContent = "Email ou senha inválidos.";
+            loadingSpinner.classList.add('hidden'); // Esconde em caso de erro
         });
 });
 
-// Processar registo
 formRegisto.addEventListener('submit', (e) => {
     e.preventDefault();
+    loadingSpinner.classList.remove('hidden'); // Mostra o spinner
     const email = document.getElementById('registo-email').value;
     const senha = document.getElementById('registo-senha').value;
 
@@ -97,12 +95,11 @@ formRegisto.addEventListener('submit', (e) => {
             } else {
                 authError.textContent = "Ocorreu um erro ao criar a conta.";
             }
+            loadingSpinner.classList.add('hidden'); // Esconde em caso de erro
         });
 });
 
-// Botão de Sair
-const btnSair = document.getElementById('btn-sair');
-btnSair.addEventListener('click', () => {
+document.getElementById('btn-sair').addEventListener('click', () => {
     auth.signOut();
 });
 
@@ -110,10 +107,8 @@ btnSair.addEventListener('click', () => {
 // --- FUNÇÃO PARA INICIAR A LÓGICA DO APP APÓS LOGIN ---
 function initializeAppLogic() {
     
-    // --- NAVEGAÇÃO ENTRE PÁGINAS ---
     const navButtons = document.querySelectorAll('[data-page]');
     const fabContainer = document.querySelector('.fab-container');
-    const appContainer = document.getElementById('app-container');
 
     function mudarPagina(paginaId) {
         document.querySelectorAll('#app-container .page').forEach(page => {
@@ -145,7 +140,6 @@ function initializeAppLogic() {
         });
     });
 
-    // --- LÓGICA DO FORMULÁRIO DE MEDICAMENTOS (CRUD) ---
     const formMedicamento = document.getElementById('form-medicamento');
 
     formMedicamento.addEventListener('submit', async (event) => {
@@ -163,11 +157,9 @@ function initializeAppLogic() {
 
         try {
             if (medicamentoId) {
-                // Atualizar
                 await collectionRef.doc(medicamentoId).update(medicamento);
                 alert("Medicamento atualizado com sucesso!");
             } else {
-                // Criar
                 await collectionRef.add(medicamento);
                 alert("Medicamento salvo com sucesso!");
             }
@@ -179,11 +171,9 @@ function initializeAppLogic() {
         }
     });
 
-    // --- CARREGAR E EXIBIR A LISTA DE MEDICAMENTOS ---
     const listaContainer = document.getElementById('lista-medicamentos-container');
     const collectionRef = db.collection('users').doc(currentUserId).collection('medicamentos');
 
-    // 'onSnapshot' escuta por mudanças em tempo real
     unsubscribeFirestore = collectionRef.onSnapshot(snapshot => {
         if (snapshot.empty) {
             listaContainer.innerHTML = '<p class="medicamento-item-placeholder">Nenhum medicamento cadastrado.</p>';
@@ -222,7 +212,6 @@ function initializeAppLogic() {
         listaContainer.innerHTML = '<p class="medicamento-item-placeholder">Erro ao carregar dados. Verifique sua conexão.</p>';
     });
 
-    // --- LÓGICA DE EDITAR E EXCLUIR ---
     listaContainer.addEventListener('click', async (e) => {
         const card = e.target.closest('.medicamento-card');
         if (!card) return;
@@ -249,7 +238,6 @@ function initializeAppLogic() {
         }
     });
 
-    // --- LÓGICA DE ALERTAS ---
     function mostrarAlerta(medicamento, tipo) {
         const container = document.getElementById('container-alertas');
         const div = document.createElement('div');
@@ -319,7 +307,7 @@ function initializeAppLogic() {
         }, segundosParaProximoMinuto * 1000);
     }
 
-    // Iniciar tudo o que depende de um utilizador autenticado
     mudarPagina('listar');
     iniciarVerificadorDeAlertas();
 }
+

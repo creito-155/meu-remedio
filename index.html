@@ -12,11 +12,18 @@
 <body>
 
     <!-- ============================================= -->
+    <!-- INDICADOR DE CARREGAMENTO                     -->
+    <!-- ============================================= -->
+    <div id="loading-spinner" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- ============================================= -->
     <!-- PÁGINA DE AUTENTICAÇÃO                          -->
     <!-- ============================================= -->
-    <section id="page-auth" class="page active">
+    <section id="page-auth" class="page hidden">
         <div class="auth-container">
-            <!-- Formulário de Login (inicialmente visível) -->
+            <!-- Formulário de Login -->
             <form id="form-login" class="auth-form">
                 <h2>Entrar</h2>
                 <div class="form-group">
@@ -31,7 +38,7 @@
                 <p class="auth-toggle">Não tem uma conta? <a href="#" id="link-para-registo">Registe-se</a></p>
             </form>
 
-            <!-- Formulário de Registo (inicialmente oculto) -->
+            <!-- Formulário de Registo -->
             <form id="form-registo" class="auth-form hidden">
                 <h2>Criar Conta</h2>
                 <div class="form-group">
@@ -50,7 +57,7 @@
     </section>
 
     <!-- ============================================= -->
-    <!-- CONTEÚDO PRINCIPAL DO APP (Oculto por defeito) -->
+    <!-- CONTEÚDO PRINCIPAL DO APP                     -->
     <!-- ============================================= -->
     <div id="app-content" class="hidden">
         <header class="navbar">
