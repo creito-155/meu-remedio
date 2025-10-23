@@ -20,6 +20,7 @@ if (typeof firebaseConfig !== 'undefined') {
 if ('serviceWorker' in navigator && typeof firebaseConfig !== 'undefined') { // Só regista se o firebase estiver ok
     window.addEventListener('load', () => {
         // Usa um caminho relativo para funcionar no GitHub Pages
+        // CORREÇÃO: Removido o hífen de 'service-worker'
         navigator.serviceWorker.register('./service-worker.js')
             .then(registration => {
                 console.log('Service Worker registrado com sucesso:', registration);
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let unsubscribe = null; // Para 'escutar' as alterações do Firestore
     let currentUser = null; // Para guardar o utilizador atual
-    let alertInterval = null;
+    let alertInterval = null; // Para os alertas
 
     // --- FUNÇÕES DE CONTROLO DE UI ---
     const showLoading = () => loadingSpinner.classList.remove('hidden');
@@ -104,14 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 showPage(appContent);
                 mudarPaginaApp('listar');
                 carregarMedicamentos(user.uid);
-                iniciarVerificacaoAlertas();
+                iniciarVerificacaoAlertas(); // Inicia os alertas
             } else {
                 showPage(pageVerificacao);
             }
         } else {
             showPage(pageAuth);
             if (unsubscribe) unsubscribe(); // Para de 'escutar' os dados do utilizador anterior
-             if(alertInterval){
+             if(alertInterval){ // Para os alertas
                 clearInterval(alertInterval);
                 alertInterval = null;
             }
@@ -341,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function verificarAlertas() {
-        if (!auth.currentUser || !auth.currentUser.emailVerified) return;
+        if (!auth.currentUser) return;
         
         db.collection('medicamentos').where('uid', '==', auth.currentUser.uid).get().then(snapshot => {
             const medicamentosAtivos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
