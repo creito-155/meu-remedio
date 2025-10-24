@@ -14,10 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        // O Storage não é mais inicializado
         
         // 3. Se tudo correu bem, inicia a aplicação principal
-        runApp(auth, db); // Remove o storage daqui
+        runApp(auth, db); 
 
     } catch (e) {
         console.error("Erro ao inicializar Firebase:", e);
@@ -28,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- FUNÇÃO PRINCIPAL DA APLICAÇÃO ---
 // Esta função só é chamada DEPOIS de o Firebase estar inicializado
-function runApp(auth, db) { // Storage removido
+function runApp(auth, db) { 
     
     // --- REGISTO DO SERVICE WORKER (PARA PWA) ---
     if ('serviceWorker' in navigator) {
@@ -64,8 +63,6 @@ function runApp(auth, db) { // Storage removido
     const fabContainer = document.querySelector('.fab-container');
     const navButtons = document.querySelectorAll('.nav-button');
     const btnSair = document.getElementById('btn-sair');
-    
-    // Seletores para redimensionamento de imagem
     const fotoUploader = document.getElementById('foto-uploader');
     const fotoResizerCanvas = document.getElementById('foto-resizer');
 
@@ -105,6 +102,20 @@ function runApp(auth, db) { // Storage removido
         if (user) {
             await user.reload();
             if (user.emailVerified) {
+                
+                // --- PEDIDO DE PERMISSÃO PARA NOTIFICAÇÕES ---
+                // Pede permissão assim que o utilizador entra no app
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            console.log('Permissão para notificações concedida.');
+                        } else {
+                            console.warn('Permissão para notificações negada.');
+                        }
+                    });
+                }
+                // --- FIM DO PEDIDO DE PERMISSÃO ---
+
                 showPage(appContent);
                 mudarPaginaApp('listar');
                 carregarMedicamentos(user.uid);
@@ -124,6 +135,7 @@ function runApp(auth, db) { // Storage removido
         hideLoading();
     });
 
+    // ... (Restante do código de autenticação: linkParaRegisto, formRegisto, formLogin, etc...)
     linkParaRegisto.addEventListener('click', (e) => { e.preventDefault(); formLogin.classList.add('hidden'); formRegisto.classList.remove('hidden'); authError.textContent = ''; });
     linkParaLogin.addEventListener('click', (e) => { e.preventDefault(); formRegisto.classList.add('hidden'); formLogin.classList.remove('hidden'); authError.textContent = ''; });
     linkParaPolitica.addEventListener('click', (e) => { e.preventDefault(); showPage(pagePolitica); });
@@ -157,7 +169,9 @@ function runApp(auth, db) { // Storage removido
     btnVoltarLogin.addEventListener('click', () => { auth.signOut(); });
     btnSair.addEventListener('click', () => { auth.signOut(); });
 
+
     // --- LÓGICA PRINCIPAL DO APP (CRUD) ---
+    // ... (Restante do CRUD: navButtons, carregarMedicamentos, renderizarMedicamentos, formMedicamento, etc...)
     navButtons.forEach(button => {
         const pageId = button.getAttribute('data-page');
         if (pageId) button.addEventListener('click', () => mudarPaginaApp(pageId));
@@ -187,15 +201,12 @@ function runApp(auth, db) { // Storage removido
             dataFinal.setDate(dataCriacao.getDate() + med.duracao);
             const isAtivo = agora < dataFinal;
             
-            // Lógica para a foto em Base64
-            const fotoHTML = med.fotoBase64 
-                ? `<img src="${med.fotoBase64}" alt="${med.nome}" class="card-foto">`
-                : ''; // Se não houver foto, não adiciona nada
+            const fotoHTML = med.fotoBase64 ? `<img src="${med.fotoBase64}" alt="${med.nome}" class="card-foto">` : ''; 
 
             const card = document.createElement('div');
             card.className = `medicamento-card ${isAtivo ? '' : 'inativo'}`;
             card.innerHTML = `
-                ${fotoHTML} <!-- A foto (thumbnail) aparece aqui -->
+                ${fotoHTML} 
                 <div class="card-content">
                     <div class="card-info">
                         <h3>${med.nome}</h3>
@@ -242,7 +253,6 @@ function runApp(auth, db) { // Storage removido
         finally { hideLoading(); }
     });
 
-    // Eventos da lista (Editar, Excluir, FOTO)
     listaMedicamentosContainer.addEventListener('click', async (e) => {
         const btnEditar = e.target.closest('.btn-editar');
         const btnExcluir = e.target.closest('.btn-excluir');
@@ -264,7 +274,6 @@ function runApp(auth, db) { // Storage removido
             const id = btnExcluir.dataset.id;
             if (confirm('Tem certeza que deseja excluir este medicamento?')) {
                 try { 
-                    // Se houver foto Base64, basta excluir o documento
                     await db.collection('medicamentos').doc(id).delete(); 
                 }
                 catch (error) { console.error("Erro ao excluir:", error); alert("Erro ao excluir."); }
@@ -277,80 +286,54 @@ function runApp(auth, db) { // Storage removido
         }
     });
 
-    // --- LÓGICA DE REDIMENSIONAMENTO E UPLOAD DA FOTO (BASE64) ---
+    // ... (Lógica de redimensionamento da foto - sem alterações)
     fotoUploader.addEventListener('change', (e) => {
         const file = e.target.files[0];
         const id = e.target.getAttribute('data-id-medicamento');
         if (!file || !id || !auth.currentUser) return;
-
         showLoading();
-        
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
                 const ctx = fotoResizerCanvas.getContext('2d');
-                
-                // Define a qualidade/tamanho máximo
-                const MAX_WIDTH = 300; // Reduzido para garantir que cabe no Firestore
-                const QUALITY = 0.7; // Compressão JPEG
-                
-                // Calcula as novas dimensões mantendo o aspect ratio
+                const MAX_WIDTH = 300; 
+                const QUALITY = 0.7;
                 let width = img.width;
                 let height = img.height;
                 if (width > MAX_WIDTH) {
                     height = (height * MAX_WIDTH) / width;
                     width = MAX_WIDTH;
                 }
-
-                // Redimensiona o canvas
                 fotoResizerCanvas.width = width;
                 fotoResizerCanvas.height = height;
-                
-                // Desenha a imagem redimensionada no canvas
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                // Converte o canvas para um Data URL (Base64) com compressão JPEG
                 const dataUrl = fotoResizerCanvas.toDataURL('image/jpeg', QUALITY); 
-                
-                // Verifica o tamanho da string Base64 (aproximado)
-                // O limite do Firestore é 1 MiB (1.048.576 bytes)
-                // Uma string Base64 é ~33% maior que os dados binários originais
-                if (dataUrl.length > 1000000 * 0.7) { // Uma margem de segurança
-                     alert("A foto é muito grande, mesmo após a compressão. Tente uma foto mais simples.");
+                if (dataUrl.length > 1000000 * 0.7) {
+                     alert("A foto é muito grande, mesmo após a compressão.");
                      hideLoading();
                      return;
                 }
-                
-                // Salva o string Base64 no Firestore
                 db.collection('medicamentos').doc(id).update({
-                    fotoBase64: dataUrl // Guarda a string Base64
+                    fotoBase64: dataUrl
                 }).then(() => {
                     hideLoading();
-                    // O onSnapshot tratará de atualizar a interface
                 }).catch(err => {
                     console.error("Erro ao salvar thumbnail:", err);
                     alert("Não foi possível salvar a foto.");
                     hideLoading();
                 });
             }
-            img.onerror = () => {
-                 alert("Não foi possível carregar a imagem selecionada.");
-                 hideLoading();
-            }
-            img.src = event.target.result; // Carrega a imagem do FileReader
+            img.onerror = () => { alert("Não foi possível carregar a imagem."); hideLoading(); }
+            img.src = event.target.result; 
         }
-        reader.onerror = () => {
-            alert("Não foi possível ler o ficheiro selecionado.");
-            hideLoading();
-        }
-        reader.readAsDataURL(file); // Lê o ficheiro como Data URL
-        
-        e.target.value = null; // Limpa o input para permitir carregar a mesma foto outra vez
+        reader.onerror = () => { alert("Não foi possível ler o ficheiro."); hideLoading(); }
+        reader.readAsDataURL(file);
+        e.target.value = null; 
     });
 
 
-    // --- LÓGICA DE ALERTAS ---
+    // --- LÓGICA DE ALERTAS (MODIFICADA) ---
     const containerAlertas = document.getElementById('container-alertas');
 
     function iniciarVerificacaoAlertas() {
@@ -390,6 +373,7 @@ function runApp(auth, db) { // Storage removido
         const alertaId = tipo === 'agora' ? `${idBase}-${Date.now()}` : idBase;
         if (tipo === 'pre' && document.getElementById(idBase)) return; 
 
+        // --- 1. MOSTRAR ALERTA VISUAL NO APP (CÓDIGO EXISTENTE) ---
         const alerta = document.createElement('div');
         alerta.id = alertaId;
         alerta.className = `alerta alerta-${tipo}`;
@@ -406,6 +390,38 @@ function runApp(auth, db) { // Storage removido
         containerAlertas.appendChild(alerta);
         alerta.querySelector('.btn-fechar-alerta').addEventListener('click', () => alerta.remove());
         setTimeout(() => alerta.remove(), 20000);
+
+        // --- 2. MOSTRAR NOTIFICAÇÃO DO SISTEMA (NOVO CÓDIGO) ---
+        const titulo = (tipo === 'agora') ? 'Hora de tomar!' : 'Lembrete (5 min)';
+        const corpo = `${medicamento.nome} - Dose: ${medicamento.dose}`;
+        
+        // Opções da notificação
+        const options = {
+            body: corpo,
+            // Usa o ícone definido no manifest.json (assumindo que 'icons/icon-192x192.png' existe)
+            icon: './icons/icon-192x192.png',
+            // Padrão de vibração: 500ms vibra, 100ms pausa, 500ms vibra
+            // (Funciona bem no Android; não funciona no iOS)
+            vibrate: [500, 100, 500],
+            // 'sound: true' não é uma opção padrão, o som é automático
+            tag: idBase // Agrupa notificações (ex: um pré-alerta é substituído pelo alerta 'agora')
+        };
+
+        // Verifica se tem permissão e se o Service Worker está pronto
+        if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                // Pede ao Service Worker para mostrar a notificação
+                // Isto é mais robusto do que new Notification()
+                registration.showNotification(titulo, options);
+            }).catch(err => {
+                // Fallback se o SW falhar
+                console.error("Falha ao usar SW para notificação, usando fallback:", err);
+                new Notification(titulo, options);
+            });
+        } else if ('Notification' in window && Notification.permission === 'granted') {
+             // Fallback se o SW não estiver disponível (ex: modo de desenvolvimento)
+            new Notification(titulo, options);
+        }
     }
 }
 
