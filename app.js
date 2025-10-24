@@ -32,6 +32,7 @@ function runApp(auth, db) {
     // --- REGISTO DO SERVICE WORKER (PARA PWA) ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+            // Usa caminho relativo
             navigator.serviceWorker.register('./service-worker.js')
                 .then(registration => {
                     console.log('Service Worker registrado com sucesso:', registration);
@@ -63,6 +64,8 @@ function runApp(auth, db) {
     const fabContainer = document.querySelector('.fab-container');
     const navButtons = document.querySelectorAll('.nav-button');
     const btnSair = document.getElementById('btn-sair');
+    
+    // Seletores para redimensionamento de imagem
     const fotoUploader = document.getElementById('foto-uploader');
     const fotoResizerCanvas = document.getElementById('foto-resizer');
 
@@ -104,7 +107,6 @@ function runApp(auth, db) {
             if (user.emailVerified) {
                 
                 // --- PEDIDO DE PERMISSÃO PARA NOTIFICAÇÕES ---
-                // Pede permissão assim que o utilizador entra no app
                 if ('Notification' in window) {
                     Notification.requestPermission().then(permission => {
                         if (permission === 'granted') {
@@ -135,7 +137,6 @@ function runApp(auth, db) {
         hideLoading();
     });
 
-    // ... (Restante do código de autenticação: linkParaRegisto, formRegisto, formLogin, etc...)
     linkParaRegisto.addEventListener('click', (e) => { e.preventDefault(); formLogin.classList.add('hidden'); formRegisto.classList.remove('hidden'); authError.textContent = ''; });
     linkParaLogin.addEventListener('click', (e) => { e.preventDefault(); formRegisto.classList.add('hidden'); formLogin.classList.remove('hidden'); authError.textContent = ''; });
     linkParaPolitica.addEventListener('click', (e) => { e.preventDefault(); showPage(pagePolitica); });
@@ -171,7 +172,6 @@ function runApp(auth, db) {
 
 
     // --- LÓGICA PRINCIPAL DO APP (CRUD) ---
-    // ... (Restante do CRUD: navButtons, carregarMedicamentos, renderizarMedicamentos, formMedicamento, etc...)
     navButtons.forEach(button => {
         const pageId = button.getAttribute('data-page');
         if (pageId) button.addEventListener('click', () => mudarPaginaApp(pageId));
@@ -193,7 +193,12 @@ function runApp(auth, db) {
             listaMedicamentosContainer.innerHTML = '<p class="medicamento-item-placeholder">Nenhum medicamento cadastrado.</p>'; return;
         }
         const agora = new Date();
-        medicamentos.sort((a, b) => b.criadoEm.toDate() - a.criadoEm.toDate());
+        medicamentos.sort((a, b) => {
+            // Proteção contra dados antigos sem 'criadoEm' na ordenação
+            const dateA = a.criadoEm ? a.criadoEm.toDate() : new Date(0);
+            const dateB = b.criadoEm ? b.criadoEm.toDate() : new Date(0);
+            return dateB - dateA;
+        });
         medicamentos.forEach(med => {
             if (!med.criadoEm) { console.warn("Medicamento sem data de criação:", med.id); return; }
             const dataCriacao = med.criadoEm.toDate();
@@ -215,7 +220,7 @@ function runApp(auth, db) {
                         <p><strong>Duração:</strong> ${med.duracao} dia(s)</p>
                     </div>
                     <div class="card-actions">
-                        <button class="btn-icon btn-foto" data-id="${med.id}" title="Adicionar Foto">
+                        <button class="btn-icon btn-foto" data-id="${med.id}" title="Adicionar/Mudar Foto">
                             <i class="fas fa-camera"></i>
                         </button>
                         <button class="btn-icon btn-editar" data-id="${med.id}" title="Editar">
@@ -242,6 +247,7 @@ function runApp(auth, db) {
         };
         try {
             if (id) { 
+                // Para atualização, não sobrescrevemos a data de criação
                 await db.collection('medicamentos').doc(id).update(dados); 
             }
             else { 
@@ -261,17 +267,22 @@ function runApp(auth, db) {
         if (btnEditar) {
             const id = btnEditar.dataset.id;
             const doc = await db.collection('medicamentos').doc(id).get();
+            if (!doc.exists) {
+                alert("Medicamento não encontrado.");
+                return;
+            }
             const data = doc.data();
             document.getElementById('medicamento-id').value = id; 
-            document.getElementById('nome').value = data.nome;
-            document.getElementById('dose').value = data.dose; 
-            document.getElementById('horario').value = data.horario;
-            document.getElementById('duracao').value = data.duracao;
+            document.getElementById('nome').value = data.nome || ''; // Proteção contra campos inexistentes
+            document.getElementById('dose').value = data.dose || ''; 
+            document.getElementById('horario').value = data.horario || '';
+            document.getElementById('duracao').value = data.duracao || '';
             document.getElementById('form-titulo').innerText = 'Editar Medicamento'; 
             mudarPaginaApp('cadastrar');
         }
         if (btnExcluir) {
             const id = btnExcluir.dataset.id;
+            // Usar um pop-up customizado em vez de confirm() seria melhor
             if (confirm('Tem certeza que deseja excluir este medicamento?')) {
                 try { 
                     await db.collection('medicamentos').doc(id).delete(); 
@@ -282,98 +293,145 @@ function runApp(auth, db) {
         if (btnFoto) {
             const id = btnFoto.dataset.id;
             fotoUploader.setAttribute('data-id-medicamento', id);
-            fotoUploader.click();
+            fotoUploader.click(); // Abre o seletor de ficheiros/câmera
         }
     });
 
-    // ... (Lógica de redimensionamento da foto - sem alterações)
+    // --- LÓGICA DE REDIMENSIONAMENTO E UPLOAD DA FOTO (BASE64) ---
     fotoUploader.addEventListener('change', (e) => {
         const file = e.target.files[0];
         const id = e.target.getAttribute('data-id-medicamento');
         if (!file || !id || !auth.currentUser) return;
+
+        // Limita o tamanho do ficheiro ANTES de processar (ex: 5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+        if (file.size > MAX_FILE_SIZE) {
+            alert("O ficheiro da foto é muito grande (máximo 5MB).");
+            e.target.value = null; // Limpa o input
+            return;
+        }
+
         showLoading();
+        
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
                 const ctx = fotoResizerCanvas.getContext('2d');
-                const MAX_WIDTH = 300; 
-                const QUALITY = 0.7;
+                const MAX_WIDTH = 300; // Largura máxima do thumbnail
+                const QUALITY = 0.7; // Qualidade JPEG (0 a 1)
                 let width = img.width;
                 let height = img.height;
+                
+                // Calcula novas dimensões mantendo a proporção
                 if (width > MAX_WIDTH) {
                     height = (height * MAX_WIDTH) / width;
                     width = MAX_WIDTH;
                 }
+                
                 fotoResizerCanvas.width = width;
                 fotoResizerCanvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
+                
+                // Converte para Base64 JPEG
                 const dataUrl = fotoResizerCanvas.toDataURL('image/jpeg', QUALITY); 
-                if (dataUrl.length > 1000000 * 0.7) {
-                     alert("A foto é muito grande, mesmo após a compressão.");
+                
+                // Verifica o tamanho final do Base64 (aproximadamente, o limite do Firestore é 1MB)
+                // 1MB = 1,048,576 bytes. Base64 aumenta o tamanho em ~33%.
+                // Vamos ser conservadores e limitar a ~700KB.
+                if (dataUrl.length > 1000000 * 0.7) { 
+                     alert("A foto é muito grande, mesmo após a compressão. Tente uma foto mais simples ou com menos detalhes.");
                      hideLoading();
                      return;
                 }
+                
+                // Salva o Base64 no Firestore
                 db.collection('medicamentos').doc(id).update({
-                    fotoBase64: dataUrl
+                    fotoBase64: dataUrl 
                 }).then(() => {
                     hideLoading();
+                    console.log("Thumbnail salvo com sucesso.");
                 }).catch(err => {
                     console.error("Erro ao salvar thumbnail:", err);
-                    alert("Não foi possível salvar a foto.");
+                    alert("Não foi possível salvar a foto. O tamanho pode ser muito grande.");
                     hideLoading();
                 });
             }
-            img.onerror = () => { alert("Não foi possível carregar a imagem."); hideLoading(); }
+            img.onerror = () => {
+                 alert("Não foi possível carregar a imagem selecionada. O ficheiro pode estar corrompido ou num formato inválido.");
+                 hideLoading();
+            }
             img.src = event.target.result; 
         }
-        reader.onerror = () => { alert("Não foi possível ler o ficheiro."); hideLoading(); }
-        reader.readAsDataURL(file);
+        reader.onerror = () => {
+            alert("Não foi possível ler o ficheiro selecionado.");
+            hideLoading();
+        }
+        reader.readAsDataURL(file); // Lê o ficheiro como Data URL (Base64)
+        
+        // Limpa o input para permitir selecionar o mesmo ficheiro novamente se necessário
         e.target.value = null; 
     });
 
 
-    // --- LÓGICA DE ALERTAS (MODIFICADA) ---
+    // --- LÓGICA DE ALERTAS (COM NOTIFICAÇÃO DO SISTEMA) ---
     const containerAlertas = document.getElementById('container-alertas');
 
     function iniciarVerificacaoAlertas() {
-        if(alertInterval) return; 
+        if(alertInterval) return; // Impede múltiplos intervalos
         const agora = new Date();
         const segundosParaProximoMinuto = 60 - agora.getSeconds();
+        // Espera até o início do próximo minuto para começar a verificar
         setTimeout(() => {
-            verificarAlertas();
-            alertInterval = setInterval(verificarAlertas, 60000);
+            verificarAlertas(); // Verifica imediatamente ao sincronizar
+            alertInterval = setInterval(verificarAlertas, 60000); // Verifica a cada 60 segundos
         }, segundosParaProximoMinuto * 1000);
     }
 
     function verificarAlertas() {
-        if (!auth.currentUser || !auth.currentUser.emailVerified) return;
+        if (!auth.currentUser || !auth.currentUser.emailVerified) return; // Só verifica se logado e verificado
+        
         db.collection('medicamentos').where('uid', '==', auth.currentUser.uid).get().then(snapshot => {
             const agora = new Date();
-            const horaAtual = agora.toTimeString().substring(0, 5);
-            const agoraMais5 = new Date(agora.getTime() + 5 * 60000);
+            const horaAtual = agora.toTimeString().substring(0, 5); // ex: "14:30"
+            const agoraMais5 = new Date(agora.getTime() + 5 * 60000); // Adiciona 5 minutos
             const horaPreAlerta = agoraMais5.toTimeString().substring(0, 5);
+
             snapshot.docs.forEach(doc => {
                 const med = { id: doc.id, ...doc.data() };
-                if (!med.criadoEm) return; 
+                if (!med.criadoEm) return; // Proteção contra dados antigos sem timestamp
+                
                 const dataCriacao = med.criadoEm.toDate();
                 const dataFinal = new Date(dataCriacao);
                 dataFinal.setDate(dataCriacao.getDate() + med.duracao);
+                
+                // Só verifica se o tratamento estiver ativo
                 if (agora < dataFinal) {
-                    const horarios = med.horario.split(',').map(h => h.trim());
-                    if (horarios.includes(horaAtual)) mostrarAlerta(med, 'agora');
-                    if (horarios.includes(horaPreAlerta)) mostrarAlerta(med, 'pre');
+                    const horarios = med.horario.split(',').map(h => h.trim()); // Divide e limpa espaços
+                    
+                    if (horarios.includes(horaAtual)) {
+                        mostrarAlerta(med, 'agora');
+                    }
+                    if (horarios.includes(horaPreAlerta)) {
+                        mostrarAlerta(med, 'pre');
+                    }
                 }
             });
+        }).catch(error => {
+            console.error("Erro ao buscar medicamentos para alertas:", error);
         });
     }
 
     function mostrarAlerta(medicamento, tipo) {
+        // ID único para alertas 'agora', mas persistente para pré-alertas
         const idBase = `alerta-${medicamento.id}-${tipo}`;
-        const alertaId = tipo === 'agora' ? `${idBase}-${Date.now()}` : idBase;
+        // Para alertas 'agora', adiciona timestamp para permitir múltiplos no mesmo minuto se necessário
+        const alertaId = tipo === 'agora' ? `${idBase}-${Date.now()}` : idBase; 
+        
+        // Impede pré-alertas duplicados
         if (tipo === 'pre' && document.getElementById(idBase)) return; 
 
-        // --- 1. MOSTRAR ALERTA VISUAL NO APP (CÓDIGO EXISTENTE) ---
+        // 1. Alerta Visual (Dentro do App)
         const alerta = document.createElement('div');
         alerta.id = alertaId;
         alerta.className = `alerta alerta-${tipo}`;
@@ -389,38 +447,32 @@ function runApp(auth, db) {
             </div>`;
         containerAlertas.appendChild(alerta);
         alerta.querySelector('.btn-fechar-alerta').addEventListener('click', () => alerta.remove());
+        // Remove automaticamente após 20 segundos
         setTimeout(() => alerta.remove(), 20000);
 
-        // --- 2. MOSTRAR NOTIFICAÇÃO DO SISTEMA (NOVO CÓDIGO) ---
+        // 2. Notificação do Sistema (Som e Vibração)
         const titulo = (tipo === 'agora') ? 'Hora de tomar!' : 'Lembrete (5 min)';
         const corpo = `${medicamento.nome} - Dose: ${medicamento.dose}`;
         
-        // Opções da notificação
         const options = {
             body: corpo,
-            // Usa o ícone definido no manifest.json (assumindo que 'icons/icon-192x192.png' existe)
-            icon: './icons/icon-192x192.png',
-            // Padrão de vibração: 500ms vibra, 100ms pausa, 500ms vibra
-            // (Funciona bem no Android; não funciona no iOS)
-            vibrate: [500, 100, 500],
-            // 'sound: true' não é uma opção padrão, o som é automático
-            tag: idBase // Agrupa notificações (ex: um pré-alerta é substituído pelo alerta 'agora')
+            icon: './img/logo.png', // Usa o logótipo como ícone da notificação
+            vibrate: [500, 100, 500], // 500ms vibra, 100ms pausa, 500ms vibra
+            tag: idBase // Agrupa notificações (pré-alerta é substituído pelo alerta 'agora')
         };
 
         // Verifica se tem permissão e se o Service Worker está pronto
         if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(registration => {
-                // Pede ao Service Worker para mostrar a notificação
-                // Isto é mais robusto do que new Notification()
+                // Pede ao Service Worker para mostrar a notificação (mais robusto)
                 registration.showNotification(titulo, options);
             }).catch(err => {
-                // Fallback se o SW falhar
-                console.error("Falha ao usar SW para notificação, usando fallback:", err);
-                new Notification(titulo, options);
+                 console.error("Falha ao usar SW para notificação, usando fallback:", err);
+                 try { new Notification(titulo, options); } catch(e) { console.error("Falha ao criar notificação fallback:", e); }
             });
         } else if ('Notification' in window && Notification.permission === 'granted') {
              // Fallback se o SW não estiver disponível (ex: modo de desenvolvimento)
-            new Notification(titulo, options);
+             try { new Notification(titulo, options); } catch(e) { console.error("Falha ao criar notificação fallback:", e); }
         }
     }
 }

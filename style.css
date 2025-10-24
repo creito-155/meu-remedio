@@ -11,7 +11,7 @@
     --altura-navbar: 60px;
 }
 
-/* --- LAYOUT SIMPLIFICADO E ROBUSTO --- */
+/* --- LAYOUT E PADRÕES GLOBAIS --- */
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -47,8 +47,9 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* --- PÁGINAS DE AUTENTICAÇÃO E POLÍTICA (NÍVEL SUPERIOR) --- */
-.page-auth-level {
+/* --- PÁGINAS DE TELA CHEIA (Auth, Verificação, Política) --- */
+.page-container {
+    padding-top: 0;
     position: fixed;
     top: 0;
     left: 0;
@@ -59,27 +60,23 @@ body {
     align-items: center;
     background-color: var(--cor-fundo);
     z-index: 2000;
-    padding: 1rem;
-    box-sizing: border-box; /* Garante que o padding não estoure a tela */
-    overflow-y: auto; /* Permite rolar se o conteúdo for grande (ex: política) */
+    overflow-y: auto; /* Permite scroll se o conteúdo for maior */
 }
-
 .auth-container {
     background: var(--cor-branco);
     padding: 2rem;
     border-radius: 8px;
     box-shadow: var(--sombra-card);
     width: 100%;
-    max-width: 500px;
-    margin: 1rem 0;
+    max-width: 400px;
+    margin: 1rem;
+    box-sizing: border-box; /* Garante que o padding não estoure a largura */
 }
-
 .auth-form h2 {
     text-align: center;
     color: var(--cor-primaria);
     margin-top: 0;
 }
-
 .btn-principal {
     width: 100%;
     padding: 0.8rem;
@@ -95,7 +92,7 @@ body {
 .btn-secundario {
     width: 100%;
     padding: 0.8rem;
-    border: none;
+    border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
     font-weight: bold;
@@ -104,23 +101,15 @@ body {
     color: var(--cor-texto);
     margin-top: 1rem;
 }
-
 .auth-toggle {
     text-align: center;
     margin-top: 1rem;
     font-size: 0.9rem;
 }
-.link {
+.auth-toggle a {
     color: var(--cor-secundaria);
     font-weight: bold;
     text-decoration: none;
-    cursor: pointer;
-}
-.auth-terms {
-    font-size: 0.85rem;
-    color: #666;
-    text-align: center;
-    margin-top: 1rem;
 }
 .auth-error {
     color: var(--cor-erro);
@@ -130,15 +119,17 @@ body {
     min-height: 1.2em;
 }
 
-/* Estilos da Página de Política de Privacidade */
+/* Estilos da Política de Privacidade */
+.politica-container {
+    max-width: 700px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
 .politica-content {
-    max-height: 40vh; /* Altura máxima para o texto */
-    overflow-y: auto; /* Barra de rolagem interna */
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-    padding: 1rem 0.5rem;
-    font-size: 0.9rem;
-    color: #444;
+    flex-grow: 1;
+    overflow-y: auto; /* Scroll apenas no conteúdo */
+    margin-bottom: 1rem;
 }
 .politica-content h3 {
     color: var(--cor-primaria);
@@ -148,11 +139,10 @@ body {
     padding-left: 1.5rem;
 }
 
-
 /* --- CONTEÚDO PRINCIPAL DA APLICAÇÃO --- */
 #app-content {
-    padding-top: var(--altura-navbar);
-    padding-bottom: 100px; /* Espaço no fundo para o FAB */
+    /* Garante espaço para o navbar fixo */
+    padding-top: var(--altura-navbar); 
 }
 
 /* Cabeçalho / Barra de Navegação */
@@ -170,13 +160,41 @@ body {
     right: 0;
     z-index: 1000;
 }
-.navbar-title { font-size: 1.2rem; margin: 0; }
-.nav-button { background: none; border: none; color: var(--cor-branco); font-size: 1rem; margin-left: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
-.nav-button span { display: none; }
+/* NOVO: Estilos do Logótipo */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Espaço entre logo e título */
+}
+.navbar-logo {
+    height: 40px; /* Tamanho do logo */
+    width: auto;
+}
+.navbar-title { 
+    font-size: 1.2rem; 
+    margin: 0; 
+    /* Esconde o título em telas muito pequenas se o logo estiver presente */
+    display: none; 
+}
+.nav-button { 
+    background: none; 
+    border: none; 
+    color: var(--cor-branco); 
+    font-size: 1.2rem; /* Aumentado para melhor toque */
+    margin-left: 0.5rem; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem; 
+    padding: 0.5rem;
+}
+.nav-button span { display: none; } /* Esconde texto por padrão (mobile-first) */
 
-/* Conteúdo Principal e Páginas Internas */
+/* Conteúdo (Sub-Páginas) */
 #app-container {
     padding: 1rem;
+    /* Garante espaço para o FAB não tapar o último card */
+    padding-bottom: 100px; 
 }
 .page { display: none; }
 #app-content .page.active { display: block; animation: fadeIn 0.5s ease-in-out; }
@@ -187,25 +205,26 @@ body {
 h2 { color: var(--cor-primaria); margin-top: 0; margin-bottom: 1rem; }
 
 /* Card de Medicamento */
-.medicamento-card {
-    background-color: var(--cor-branco);
-    border-radius: 8px;
-    box-shadow: var(--sombra-card);
-    padding: 1rem;
-    margin-bottom: 1rem;
+.medicamento-card { 
+    background-color: var(--cor-branco); 
+    border-radius: 8px; 
+    box-shadow: var(--sombra-card); 
+    margin-bottom: 1rem; 
     transition: opacity 0.3s, background-color 0.3s;
+    overflow: hidden; /* Garante que a imagem não vaze */
 }
-/* Estilo para a foto no card (agora de Base64) */
+.medicamento-card.inativo { opacity: 0.6; background-color: #e9ecef; }
+.medicamento-card.inativo h3 { text-decoration: line-through; } /* Corrigido seletor */
+
+/* NOVO: Estilos da Foto (Thumbnail) */
 .card-foto {
     width: 100%;
-    max-height: 250px; /* Limita a altura máxima da imagem */
-    object-fit: contain; /* Mostra a imagem inteira, sem cortar */
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    background-color: #eee; /* Cor de fundo enquanto carrega ou se não houver imagem */
-    display: block; /* Garante que a imagem se comporte como bloco */
+    height: 180px; /* Altura fixa para a foto */
+    object-fit: cover; /* Garante que a foto cubra o espaço */
+    display: block;
 }
 .card-content {
+    padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -213,12 +232,11 @@ h2 { color: var(--cor-primaria); margin-top: 0; margin-bottom: 1rem; }
 .card-info { flex-grow: 1; }
 .card-info h3 { margin: 0 0 0.5rem 0; transition: text-decoration 0.3s; }
 .card-info p { font-size: 0.9rem; opacity: 0.8; margin: 0; }
-.card-actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; /* Permite que os botões quebrem linha se necessário */ }
+.card-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
 .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0.5rem; color: var(--cor-texto); opacity: 0.6; }
 .btn-icon:hover { opacity: 1; }
 .medicamento-item-placeholder { text-align: center; padding: 2rem; color: #888; }
-.medicamento-card.inativo { opacity: 0.6; background-color: #e9ecef; }
-.medicamento-card.inativo h3 { text-decoration: line-through; }
+
 
 /* --- BOTÃO FLUTUANTE --- */
 .fab-container {
@@ -228,6 +246,7 @@ h2 { color: var(--cor-primaria); margin-top: 0; margin-bottom: 1rem; }
     width: 60px;
     height: 60px;
     z-index: 9998;
+    transform: translateZ(0); /* Correção de camada de renderização */
 }
 .fab { width: 100%; height: 100%; border-radius: 50%; background-color: var(--cor-secundaria); color: var(--cor-branco); border: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; display: flex; justify-content: center; align-items: center; }
 
@@ -249,26 +268,42 @@ h2 { color: var(--cor-primaria); margin-top: 0; margin-bottom: 1rem; }
 
 @keyframes slideIn { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
 
-/* Media Queries para Responsividade */
+/* Media Queries para Responsividade (Desktop/Tablet) */
 @media (min-width: 600px) {
-    .nav-button span { display: inline; }
-    /* Ajuste para card com foto */
+    .navbar-title { 
+        display: inline; /* Mostra o título em telas maiores */
+    }
+    .nav-button span { 
+        display: inline; /* Mostra o texto dos botões */
+    }
+    .card-content {
+        flex-direction: row; /* Foto e infos lado a lado */
+        align-items: center;
+    }
+    /* NOVO: Ajuste para foto e conteúdo lado a lado */
     .medicamento-card {
         display: flex;
         flex-direction: row;
-        gap: 1rem;
+        align-items: stretch;
     }
     .card-foto {
-        width: 150px; /* Largura fixa para a foto em telas maiores */
-        height: 150px;
-        margin-bottom: 0;
+        width: 150px; /* Largura fixa para a foto */
+        height: auto; /* Altura automática */
+        object-fit: cover;
     }
     .card-content {
-        flex: 1; /* Ocupa o espaço restante */
-        flex-direction: row;
-        align-items: center;
+        flex-grow: 1;
+        justify-content: space-between;
     }
+    
     .form-actions { flex-direction: row; }
-    #container-alertas { left: auto; width: 350px; }
+    /* Ajuste na posição dos alertas em telas maiores para não sobrepor o navbar fixo */
+    #container-alertas { 
+        left: auto; 
+        width: 350px; 
+        top: calc(var(--altura-navbar) + 1rem); /* Abaixo do navbar */
+        right: 1rem; /* Mantém no canto direito */
+    }
     @keyframes slideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
 }
+
