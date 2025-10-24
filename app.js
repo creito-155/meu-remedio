@@ -456,7 +456,7 @@ function runApp(auth, db) {
         
         const options = {
             body: corpo,
-            icon: './img/logo.png', // Usa o logótipo como ícone da notificação
+            icon: 'img/logo.png', // Usa o logótipo como ícone da notificação
             vibrate: [500, 100, 500], // 500ms vibra, 100ms pausa, 500ms vibra
             tag: idBase // Agrupa notificações (pré-alerta é substituído pelo alerta 'agora')
         };
