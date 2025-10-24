@@ -4,116 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App de Medicamentos</title>
-    <!-- Normalize.css para consistência entre navegadores -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="./manifest.json">
+    <!-- Ícones (Font Awesome) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Normalize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <!-- A nossa folha de estilos -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="./manifest.json">
 </head>
 <body>
 
-    <!-- Indicador de Carregamento -->
+    <!-- Indicador de Carregamento Global -->
     <div id="loading-spinner" class="loading-overlay hidden">
         <div class="spinner"></div>
     </div>
 
-    <!-- PÁGINA DE AUTENTICAÇÃO -->
+    <!-- Container para Alertas -->
+    <div id="container-alertas"></div>
+
+    <!-- ============================================= -->
+    <!-- PÁGINA DE AUTENTICAÇÃO (Nível Superior) -->
+    <!-- ============================================= -->
     <section id="page-auth" class="page-auth-level">
         <div class="auth-container">
             <!-- Formulário de Login -->
             <form id="form-login" class="auth-form">
                 <h2>Login</h2>
                 <div class="form-group">
-                    <label for="login-email">Email:</label>
+                    <label for="login-email">E-mail</label>
                     <input type="email" id="login-email" required>
                 </div>
                 <div class="form-group">
-                    <label for="login-senha">Senha:</label>
+                    <label for="login-senha">Senha</label>
                     <input type="password" id="login-senha" required>
                 </div>
-                <p class="auth-error" id="auth-error"></p>
+                <div id="auth-error" class="auth-error"></div>
                 <button type="submit" class="btn-principal">Entrar</button>
-                <p class="auth-toggle">Não tem conta? <a href="#" id="link-para-registo" class="link">Registe-se</a></p>
-                <p class="auth-terms">
+                <div class="auth-toggle">
+                    Não tem conta? <a href="#" id="link-para-registo" class="link">Registe-se</a>
+                </div>
+                 <div class="auth-terms">
                     <a href="#" id="link-para-politica-login" class="link">Política de Privacidade</a>
-                </p>
+                </div>
             </form>
+            
             <!-- Formulário de Registo -->
             <form id="form-registo" class="auth-form hidden">
                 <h2>Criar Conta</h2>
                 <div class="form-group">
-                    <label for="registo-email">Email:</label>
+                    <label for="registo-email">E-mail</label>
                     <input type="email" id="registo-email" required>
                 </div>
                 <div class="form-group">
-                    <label for="registo-senha">Senha (mín. 6 caracteres):</label>
-                    <input type="password" id="registo-senha" minlength="6" required>
+                    <label for="registo-senha">Senha</label>
+                    <input type="password" id="registo-senha" required>
                 </div>
-                <!-- Link para a Política de Privacidade -->
-                <p class="auth-terms">
-                    Ao criar a sua conta, você concorda com a nossa 
-                    <a href="#" id="link-para-politica" class="link">Política de Privacidade</a>.
-                </p>
                 <button type="submit" class="btn-principal">Criar Conta</button>
-                <p class="auth-toggle">Já tem conta? <a href="#" id="link-para-login" class="link">Login</a></p>
+                <div class="auth-terms">
+                    Ao criar uma conta, você concorda com a nossa 
+                    <a href="#" id="link-para-politica" class="link">Política de Privacidade</a>.
+                </div>
+                <div class="auth-toggle">
+                    Já tem conta? <a href="#" id="link-para-login" class="link">Login</a>
+                </div>
             </form>
         </div>
     </section>
 
-    <!-- PÁGINA DE VERIFICAÇÃO DE E-MAIL -->
+    <!-- ============================================= -->
+    <!-- PÁGINA DE VERIFICAÇÃO DE E-MAIL (Nível Superior) -->
+    <!-- ============================================= -->
     <section id="page-verificacao" class="page-auth-level hidden">
         <div class="auth-container">
             <h2>Verifique o seu E-mail</h2>
-            <p>Enviámos um link de verificação para o seu e-mail. Por favor, clique no link para ativar a sua conta.</p>
-            <p>Se não o recebeu, verifique a sua pasta de spam ou clique abaixo para reenviar.</p>
+            <p style="text-align: center;">Enviámos um link de verificação para o seu e-mail. Por favor, clique no link para ativar a sua conta.</p>
             <button id="btn-reenviar-verificacao" class="btn-principal">Reenviar E-mail</button>
             <button id="btn-voltar-login" class="btn-secundario">Voltar ao Login</button>
         </div>
     </section>
 
-    <!-- PÁGINA DA POLÍTICA DE PRIVACIDADE -->
+    <!-- ============================================= -->
+    <!-- PÁGINA DE POLÍTICA DE PRIVACIDADE (Nível Superior) -->
+    <!-- ============================================= -->
     <section id="page-politica" class="page-auth-level hidden">
         <div class="auth-container">
             <h2>Política de Privacidade</h2>
             <div class="politica-content">
-                <p><strong>Última atualização:</strong> 22 de outubro de 2025</p>
-                <p>Esta Política de Privacidade descreve como as suas informações são recolhidas, usadas e protegidas ao usar a nossa aplicação (o "Serviço").</p>
+                <p><strong>Última atualização:</strong> 24 de outubro de 2025</p>
+                <p>A sua privacidade é importante para nós. Esta política explica como recolhemos, usamos e protegemos as suas informações.</p>
                 
-                <h3>Recolha de Informações</h3>
-                <p>Recolhemos as seguintes informações:</p>
+                <h3>1. Informações que Recolhemos</h3>
                 <ul>
-                    <li><strong>Informações da Conta:</strong> O seu endereço de e-mail e uma senha (encriptada) para criar e proteger a sua conta.</li>
-                    <li><strong>Dados de Saúde:</strong> Informações que você insere voluntariamente na aplicação, como nomes de medicamentos, doses, horários e duração do tratamento.</li>
+                    <li><strong>Informações de Conta:</strong> O seu endereço de e-mail para criar e proteger a sua conta.</li>
+                    <li><strong>Dados de Saúde:</strong> Informações que você insere sobre os seus medicamentos (nome, dose, horários, duração).</li>
+                    <li><strong>Fotos (Opcional):</strong> Se você escolher, podemos aceder à sua câmara para tirar fotos dos seus medicamentos. Estas fotos são reduzidas e armazenadas de forma segura.</li>
+                </ul>
+                
+                <h3>2. Como Usamos as Suas Informações</h3>
+                <ul>
+                    <li>Para fornecer as funcionalidades principais da aplicação, como lembretes de medicação.</li>
+                    <li>Para proteger a sua conta e os seus dados.</li>
+                    <li>Os seus dados de saúde são privados e não são partilhados com terceiros.</li>
                 </ul>
 
-                <h3>Uso das Informações</h3>
-                <p>Usamos as suas informações exclusivamente para:</p>
-                <ul>
-                    <li>Fornecer e manter o Serviço (ex: guardar a sua lista de medicamentos).</li>
-                    <li>Notificá-lo sobre os horários dos seus medicamentos.</li>
-                    <li>Proteger a sua conta e os seus dados.</li>
-                </ul>
+                <h3>3. Armazenamento de Dados</h3>
+                <p>Os seus dados são armazenados de forma segura nos servidores do Firebase (Google). Apenas você tem acesso aos seus dados de medicação através da sua conta autenticada.</p>
 
-                <h3>Armazenamento e Segurança</h3>
-                <p>Os seus dados são armazenados de forma segura nos servidores do Google Firebase. O acesso aos seus dados pessoais de saúde está protegido pelas Regras de Segurança do Firebase, que garantem que <b>apenas você</b> (através da sua conta autenticada) pode ler ou escrever os seus próprios dados.</p>
-                
-                <h3>Partilha de Informações</h3>
-                <p><b>Nós não partilhamos, vendemos ou alugamos as suas informações pessoais ou de saúde a terceiros.</b> Os seus dados são confidenciais e usados apenas para o funcionamento da aplicação.</p>
-
-                <h3>Os Seus Direitos</h3>
-                <p>Você tem o direito de aceder, editar ou eliminar os seus dados a qualquer momento através da aplicação (por exemplo, ao eliminar um medicamento ou a sua conta).</p>
-
-                <h3>Contacto</h3>
-                <p>Se tiver alguma dúvida sobre esta Política de Privacidade, por favor contacte-nos através do e-mail: [Email de Contacto do Governo/Departamento].</p>
+                <h3>4. Os Seus Direitos</h3>
+                <p>Você pode editar ou excluir os seus dados de medicação a qualquer momento através da aplicação. Você também pode solicitar a exclusão da sua conta.</p>
             </div>
             <button id="btn-voltar-auth" class="btn-secundario">Voltar</button>
         </div>
     </section>
 
 
-    <!-- CONTEÚDO PRINCIPAL DA APLICAÇÃO (Após Login) -->
-    <div id="app-content" class="hidden">
-        <!-- Barra de Navegação Superior -->
+    <!-- ============================================= -->
+    <!-- CONTEÚDO PRINCIPAL DA APLICAÇÃO (Nível Superior) -->
+    <!-- ============================================= -->
+    <main id="app-content" class="hidden">
+        <!-- Cabeçalho Fixo -->
         <header class="navbar">
             <h1 class="navbar-title">Meus Medicamentos</h1>
             <nav>
@@ -125,15 +135,15 @@
                     <i class="fas fa-info-circle"></i>
                     <span>Sobre</span>
                 </button>
-                <button class="nav-button" id="btn-sair">
+                <button id="btn-sair" class="nav-button">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </button>
             </nav>
         </header>
 
-        <!-- Container das Páginas Internas -->
-        <main id="app-container">
+        <!-- Container para as páginas internas -->
+        <div id="app-container">
             <!-- PÁGINA 1: Listagem -->
             <section id="page-listar" class="page active">
                 <h2>Meus Medicamentos</h2>
@@ -145,27 +155,37 @@
             <!-- PÁGINA 2: Cadastro / Edição -->
             <section id="page-cadastrar" class="page">
                 <h2 id="form-titulo">Cadastrar Medicamento</h2>
+                
                 <form id="form-medicamento">
                     <input type="hidden" id="medicamento-id">
+                    
                     <div class="form-group">
                         <label for="nome">Nome do Medicamento:</label>
                         <input type="text" id="nome" name="nome" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="dose">Dose (ex: 500mg):</label>
+                        <label for="dose">Dose (ex: 500mg, 1 comprimido):</label>
                         <input type="text" id="dose" name="dose" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="horario">Horários (separados por vírgula, ex: 08:00, 14:00):</label>
+                        <label for="horario">Horários (separados por vírgula):</label>
                         <input type="text" id="horario" name="horario" placeholder="08:00, 14:00, 20:00" required>
                     </div>
+                    
                     <div class="form-group">
                         <label for="duracao">Duração (dias):</label>
                         <input type="number" id="duracao" name="duracao" min="1" required>
                     </div>
+                    
                     <div class="form-actions">
-                        <button type="submit" class="btn-salvar">Salvar</button>
-                        <button type="button" class="btn-cancelar" data-page="listar">Cancelar</button>
+                        <button type="submit" class="btn-salvar">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <button type="button" class="btn-cancelar" data-page="listar">
+                            Cancelar
+                        </button>
                     </div>
                 </form>
             </section>
@@ -174,9 +194,9 @@
             <section id="page-sobre" class="page">
                 <h2>Sobre o Projeto</h2>
                 <p>Este é o Projeto App de Medicamentos.</p>
-                <p>Desenvolvido para auxiliar no controlo e agendamento de remédios, com foco em PWA, segurança de dados e acessibilidade.</p>
+                <p>Desenvolvido para auxiliar no controlo e agendamento de remédios, com foco em PWA, acessibilidade e segurança de dados.</p>
             </section>
-        </main>
+        </div>
 
         <!-- Botão Flutuante (FAB) -->
         <div class="fab-container">
@@ -184,18 +204,25 @@
                 <i class="fas fa-plus"></i>
             </button>
         </div>
-    </div>
 
-    <!-- Container de Alertas -->
-    <div id="container-alertas"></div>
-
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+    </main>
     
-    <script src="./firebase-config.js" defer></script>
-    <script src="./app.js" defer></script>
+    <!-- Input de Câmara Oculto -->
+    <input type="file" id="foto-uploader" class="hidden" accept="image/*" capture="environment">
+    
+    <!-- Canvas Oculto para Redimensionar a Imagem -->
+    <canvas id="foto-resizer" class="hidden"></canvas>
 
+    <!-- SDKs do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js" defer></script>
+    <!-- O SDK DO STORAGE FOI REMOVIDO -->
+
+    <!-- Configuração do Firebase -->
+    <script src="./firebase-config.js" defer></script>
+    
+    <!-- Lógica Principal do App -->
+    <script src="./app.js" defer></script>
 </body>
 </html>
